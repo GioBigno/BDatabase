@@ -3,6 +3,8 @@
 #include <QPainter>
 #include <QQmlEngine>
 #include <QSettings>
+#include <QSqlQuery>
+#include <QSqlError>
 
 #include <QDebug>
 
@@ -16,10 +18,10 @@ BDatabase::~BDatabase(){
     qDebug() << "distruttore";
 }
 
-void BDatabase::start(const QString username, const QString password, const QString hostName, const QString DatabaseName){
-    qDebug()<<"starto";
+void BDatabase::connect(const QString username, const QString password, const QString hostName, const QString DatabaseName){
+    qDebug()<<"connecting...";
 
-    db = QSqlDatabase::addDatabase("QPSQL");
+    QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
     db.setUserName(username);
     db.setPassword(password);
     db.setHostName(hostName);
@@ -28,9 +30,11 @@ void BDatabase::start(const QString username, const QString password, const QStr
     if(!db.open()){
         qmlEngine(this)->throwError(tr("invalid database credentials"));
     }
+
+    qDebug()<<"connected";
 }
 
-void BDatabase::start(const QString filePath){
+void BDatabase::connect(const QString filePath){
 
     QSettings settings(filePath, QSettings::IniFormat);
 
@@ -41,6 +45,27 @@ void BDatabase::start(const QString filePath){
     const QString database = settings.value("database").toString();
     settings.endGroup();
 
-    start(username, password, host, database);
+    connect(username, password, host, database);
 }
 
+void BDatabase::disconnect(){
+    QSqlDatabase::database().close();
+}
+
+bool BDatabase::isConnected(){
+    return QSqlDatabase::database().isOpen();
+}
+
+bool BDatabase::execute(const QString queryStr){
+
+    QSqlQuery query(QSqlDatabase::database());
+
+    if(!query.exec(queryStr)){
+        qDebug() << "Error executing query:" << query.lastError().text();
+        return false;
+    }
+
+    //save the result
+
+    return true;
+}
