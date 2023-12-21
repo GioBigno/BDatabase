@@ -5,6 +5,9 @@
 #include <QSettings>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QSqlRecord>
+#include <QVariantMap>
+#include <QVariant>
 
 #include <QDebug>
 
@@ -56,16 +59,30 @@ bool BDatabase::isConnected(){
     return QSqlDatabase::database().isOpen();
 }
 
-bool BDatabase::execute(const QString queryStr){
+QList<QVariantMap> BDatabase::execute(const QString queryStr){
 
     QSqlQuery query(QSqlDatabase::database());
+    QList<QVariantMap> resultList;
 
     if(!query.exec(queryStr)){
         qDebug() << "Error executing query:" << query.lastError().text();
-        return false;
+        return resultList;
     }
 
-    //save the result
+    while (query.next()) {
 
-    return true;
+        QVariantMap row;
+        for (int i = 0; i < query.record().count(); ++i) {
+            QString columnName = query.record().fieldName(i);
+            QVariant value = query.value(i);
+
+            qDebug() << "valore: " << value;
+
+            row.insert(columnName, value);
+        }
+        resultList.append(row);
+
+    }
+
+    return resultList;
 }
