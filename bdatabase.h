@@ -15,21 +15,36 @@ class BDatabase : public QObject{
     QML_ELEMENT
     Q_DISABLE_COPY(BDatabase)
 
+    Q_PROPERTY(DbType databaseType READ databaseType WRITE setDatabaseType NOTIFY databaseTypeChanged REQUIRED)
+
 signals:
-    void numberChanged();
+    void databaseTypeChanged();
+
+public:
+    explicit BDatabase(QObject *parent = nullptr);
+    ~BDatabase() override;
+
+    enum DbType{
+        QPSQL,
+        QSQLITE
+    };
+
+    Q_ENUM(DbType)
 
 public slots:
+    DbType databaseType();
+    void setDatabaseType(const DbType t);
     void connect(const QString username, const QString password, const QString hostName, const QString DatabaseName);
     void connect(const QString filePath);
     void disconnect();
     bool isConnected();
     QList<QVariantMap> execute(const QString queryStr);
 
-public:
-    explicit BDatabase(QObject *parent = nullptr);
-    ~BDatabase() override;
-
 private:
+    DbType m_databaseType;
+
+    const QString DbTypeToString(const DbType dbType) const;
+
 };
 
 #endif // BDATABASE_H

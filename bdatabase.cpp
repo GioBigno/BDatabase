@@ -21,8 +21,20 @@ BDatabase::~BDatabase(){
     qDebug() << "distruttore";
 }
 
+BDatabase::DbType BDatabase::databaseType(){
+    return m_databaseType;
+}
+
+void BDatabase::setDatabaseType(const DbType t){
+
+    if(m_databaseType == t)
+        return;
+
+    m_databaseType = t;
+    emit databaseTypeChanged();
+}
+
 void BDatabase::connect(const QString username, const QString password, const QString hostName, const QString DatabaseName){
-    qDebug()<<"connecting...";
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
     db.setUserName(username);
@@ -33,22 +45,37 @@ void BDatabase::connect(const QString username, const QString password, const QS
     if(!db.open()){
         qmlEngine(this)->throwError(tr("invalid database credentials"));
     }
-
-    qDebug()<<"connected";
 }
 
 void BDatabase::connect(const QString filePath){
 
-    QSettings settings(filePath, QSettings::IniFormat);
+    qDebug()<<"connecting...";
 
-    settings.beginGroup("database");
-    const QString username = settings.value("username").toString();
-    const QString password = settings.value("password").toString();
-    const QString host = settings.value("host").toString();
-    const QString database = settings.value("database").toString();
-    settings.endGroup();
+    switch(m_databaseType){
+        case QPSQL: {
+            QSettings settings(filePath, QSettings::IniFormat);
 
-    connect(username, password, host, database);
+            settings.beginGroup("database");
+            const QString username = settings.value("username").toString();
+            const QString password = settings.value("password").toString();
+            const QString host = settings.value("host").toString();
+            const QString database = settings.value("database").toString();
+            settings.endGroup();
+
+            connect(username, password, host, database);
+        }
+        break;
+        case QSQLITE: {
+            QSqlDatabase db = QSqlDatabase::addDatabase(DbTypeToString(DbType::QSQLITE));
+            db.setDatabaseName(filePath);
+
+            if(!db.open()){
+                qmlEngine(this)->throwError(tr("invalid database file path"));
+            }
+        }
+    }
+
+    qDebug()<<"connected";
 }
 
 void BDatabase::disconnect(){
@@ -85,4 +112,15 @@ QList<QVariantMap> BDatabase::execute(const QString queryStr){
     }
 
     return resultList;
+}
+
+const QString BDatabase::DbTypeToString(const DbType dbType) const{
+    switch (dbType) {
+    case QPSQL:
+        return "QPSQL";
+    case QSQLITE:
+        return "QSQLITE";
+    default:
+        return "Unknown";
+    }
 }
