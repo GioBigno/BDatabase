@@ -33,7 +33,7 @@ target_link_libraries(BDatabase
 target_include_directories(BDatabase PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt6_generate_deploy_qml_app_script(
-    TARGET WeekWise
+    TARGET BDatabase
     OUTPUT_SCRIPT deploy_script
     NO_UNSUPPORTED_PLATFORM_ERROR
     MACOS_BUNDLE_POST_BUILD
